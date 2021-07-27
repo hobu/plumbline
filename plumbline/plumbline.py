@@ -36,10 +36,10 @@ from shapely.ops import transform
 
 
 # Set up logger for stdout
-logger = logging.getLogger("plumbline")
+logger = logging.getLogger(__file__)
 
 formatter = logging.Formatter('[%(levelname)s] %(message)s')
-
+#
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 
@@ -119,7 +119,7 @@ class Datasource(EPT):
             im = Image.open(images[0]).convert('RGB')
             pils = [Image.open(image).convert('RGB') for image in images[1:]]
             im.save(self.args.plot, "PDF" ,resolution=100.0, save_all=True, append_images=pils)
-        return didPass
+        return out_stats
 
     def boundary(self):
         """Compute a PDAL hexbin boundary at a coarse resolution"""
@@ -289,10 +289,8 @@ class Datasource(EPT):
         return buf
 
 
-if __name__ == "__main__":
-    sys.exit(main())
 
-def main():
+def get_parser(args):
 
     import argparse
 
@@ -324,7 +322,11 @@ def main():
     parser.add_argument('--plot', default = '',
                                   help='Plot PDF of sample illustrations')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+    return args
+#
+def main():
+    args = get_parser(sys.argv[1:])
     if args.debug:
         handler.setLevel(logging.DEBUG)
     ds = Datasource(args)
@@ -333,5 +335,8 @@ def main():
     if not passed:
         return 1
     return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
 
 

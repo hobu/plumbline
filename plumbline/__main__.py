@@ -1,4 +1,5 @@
 import plumbline.plumbline as pl
 
 import sys
-sys.exit(pl.main())
+def main():
+    sys.exit(pl.main())

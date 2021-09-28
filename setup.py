@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='plumbline',  # Required
-    version='0.0.1',  # Required
+    version='0.0.5',  # Required
     description='Python for comparing EPT and DEM data',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -28,11 +28,11 @@ setup(
     packages=find_packages(),  # Required
     python_requires='>=3.8',
 
-    install_requires=['pdal','matplotlib', 'ept-python','Shapely', 'rasterio','dask', 'pyproj'],  # Optional
+    install_requires=['pdal','matplotlib', 'ept-python','Shapely', 'rasterio','dask', 'pyproj','distributed','scipy'],  # Optional
 
     entry_points={  # Optional
         'console_scripts': [
-            'plumbline=plumbline.__main__',
+            'plumbline=plumbline.__main__:main',
         ],
     },
 

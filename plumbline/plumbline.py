@@ -11,15 +11,16 @@ import pdal
 from scipy import stats as sci_stats
 
 # Standard imports
+import os
 import io
 import logging
 import argparse
 import sys
 from pathlib import Path
 import numpy as np
-import math
 import random
 from PIL import Image
+from urllib import parse
 
 import subprocess
 import json
@@ -122,6 +123,14 @@ class Datasource(EPT):
         return out_stats
 
     def boundary(self):
+        #If an azure file, call pdal with az://
+        url = self.root_url
+        if 'blob.core.windows.net' in self.root_url:
+            parsed = parse.urlparse(url)
+            os.environ['AZURE_STORAGE_ACCOUNT'] = parsed.netloc.split('.')[0]
+            os.environ['AZURE_SAS_TOKEN'] = parsed.query
+            url = 'az:/'+ parsed.path
+
         """Compute a PDAL hexbin boundary at a coarse resolution"""
         cargs = ['pdal','info','--all',
                 '--driver','readers.ept',
@@ -129,12 +138,13 @@ class Datasource(EPT):
                 f'--readers.ept.threads=6',
                 f'--filters.hexbin.edge_size={self.args.edge_size}',
                 f'--filters.hexbin.threshold=1',
-                self.root_url+'/ept.json']
+                url]
         logger.debug(" ".join(cargs))
         p = subprocess.Popen(cargs, stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
-                                    encoding='utf8')
+                                    encoding='utf8',
+                                    env=os.environ.copy())
         ret = p.communicate()
         if p.returncode != 0:
             error = ret[1]
@@ -184,9 +194,16 @@ class Datasource(EPT):
         bounds = rasterio.features.geometry_window(self.raster, [buffer_dd])
         dem = self.raster.read(window = bounds)
 
+        url = self.root_url
+        if 'blob.core.windows.net' in self.root_url:
+            parsed = parse.urlparse(url)
+            os.environ['AZURE_STORAGE_ACCOUNT'] = parsed.netloc.split('.')[0]
+            os.environ['AZURE_SAS_TOKEN'] = parsed.query
+            url = 'az:/'+ parsed.path
+
         pipeline = [{
               "type": "readers.ept",
-              "filename": self.root_url+'/ept.json',
+              "filename": url,
               "resolution":self.args.ept_resolution,
               "bounds": f"([{point_buf.bounds[0]}, {point_buf.bounds[2]}], [{point_buf.bounds[1]}, {point_buf.bounds[3]}])"
 
@@ -314,7 +331,7 @@ def get_parser(args):
     parser.add_argument('--boundary_resolution', type=float, default=150,
                         help='filters.hexbin resolution')
     parser.add_argument('--ept_resolution', type=float, default=25.0,
-                        help='filters.hexbin resolution')
+                        help='readers.ept resolution')
     parser.add_argument('--debug',
                         action='store_true',
                         help='print debug messages to stderr')
@@ -338,5 +355,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
-

@@ -1,4 +1,4 @@
-name: plumbline-clean
+name: plumbline
 channels:
   - conda-forge
   - defaults
@@ -10,4 +10,3 @@ dependencies:
   - scipy
   - shapely
   - pyproj
-prefix: /Users/hobu/miniconda3/envs/plumbline-clean

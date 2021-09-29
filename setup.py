@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='plumbline',  # Required
-    version='0.0.5',  # Required
+    version='0.0.6',  # Required
     description='Python for comparing EPT and DEM data',
     long_description=long_description,
     long_description_content_type='text/markdown',

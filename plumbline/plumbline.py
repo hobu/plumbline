@@ -21,6 +21,7 @@ import math
 import random
 from PIL import Image
 
+from urllib.parse import parse_qs
 import subprocess
 import json
 
@@ -123,13 +124,21 @@ class Datasource(EPT):
 
     def boundary(self):
         """Compute a PDAL hexbin boundary at a coarse resolution"""
+        url = self.root_url + '/ept.json'
+        query = {}
+        if self.query is not None:
+            parsed = parse_qs(self.query)
+            for key in parsed:
+                query[key] = ','.join(parsed[key])
+
         cargs = ['pdal','info','--all',
                 '--driver','readers.ept',
                 f'--readers.ept.resolution={self.args.boundary_resolution}',
                 f'--readers.ept.threads=6',
+                f'--readers.ept.query={json.dumps(query)}',
                 f'--filters.hexbin.edge_size={self.args.edge_size}',
                 f'--filters.hexbin.threshold=1',
-                self.root_url+'/ept.json']
+                url]
         logger.debug(" ".join(cargs))
         p = subprocess.Popen(cargs, stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
@@ -184,10 +193,17 @@ class Datasource(EPT):
         bounds = rasterio.features.geometry_window(self.raster, [buffer_dd])
         dem = self.raster.read(window = bounds)
 
+        url = self.root_url + '/ept.json'
+        query = {}
+        if self.query is not None:
+            parsed = parse_qs(self.query)
+            for key in parsed:
+                query[key] = ','.join(parsed[key])
         pipeline = [{
               "type": "readers.ept",
-              "filename": self.root_url+'/ept.json',
+              "filename": url,
               "resolution":self.args.ept_resolution,
+              "query": query,
               "bounds": f"([{point_buf.bounds[0]}, {point_buf.bounds[2]}], [{point_buf.bounds[1]}, {point_buf.bounds[3]}])"
 
               },{"type":"filters.range","limits":"Classification![7:7]"}]
